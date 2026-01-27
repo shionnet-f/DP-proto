@@ -1,51 +1,97 @@
-// 確認ページ（枠だけ・遷移を通す）
-"use client";
-
+// src/app/proto/v0/c1/confirm/page.tsx
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
-export default function ProtoV0C1ConfirmPage() {
-    const sp = useSearchParams();
-    const variant = sp.get("variant") === "dp" ? "dp" : "control";
-    const productId = sp.get("productId") ?? "p2";
-    const shippingId = sp.get("shippingId") ?? "normal";
+type SearchParams = {
+    variant?: string;
+    productId?: string;
+    productPrice?: string;
+    shippingId?: string;
+    opt?: string | string[];
+};
+
+type Props = {
+    searchParams?: SearchParams;
+};
+
+function yen(n: number) {
+    return new Intl.NumberFormat("ja-JP").format(n);
+}
+
+function toArray(v?: string | string[]) {
+    if (!v) return [];
+    return Array.isArray(v) ? v : [v];
+}
+
+export default function ProtoV0C1ConfirmPage({ searchParams }: Props) {
+    const sp = searchParams ?? {};
+
+    const variant = sp.variant === "dp" ? "dp" : "control";
+    const productId = sp.productId ?? "";
+    const productPrice = Number(sp.productPrice ?? 0) || 0;
+
+    const shippingId = sp.shippingId ?? "normal";
+    const options = toArray(sp.opt);
+
+    // 仮定義（shippingと揃える）
+    const shippingPrice = shippingId === "premium" ? 150 : 0;
+    const optionsPrice =
+        (options.includes("insurance") ? 300 : 0) +
+        (options.includes("giftwrap") ? 200 : 0);
+
+    const total = productPrice + shippingPrice + optionsPrice;
 
     return (
-        <div className="space-y-4">
-            <h1 className="text-xl font-bold">カテゴリー1 / 最終確認（{variant}）</h1>
+        <main className="space-y-6">
+            <header>
+                <div className="text-xs text-gray-500">proto / v0 / c1</div>
+                <h1 className="text-xl font-bold">
+                    カテゴリー1 / 最終確認（{variant}）
+                </h1>
+            </header>
 
-            <div className="rounded-lg border p-4 text-sm space-y-1">
+            <section className="rounded-lg border p-4 space-y-2 text-sm">
                 <div>
-                    productId: <span className="font-mono">{productId}</span>
+                    商品: <span className="font-mono">{productId}</span>
                 </div>
-                <div>
-                    shippingId: <span className="font-mono">{shippingId}</span>
-                </div>
-            </div>
+                <div>商品価格: {yen(productPrice)}円</div>
+            </section>
 
-            <button
-                type="button"
-                className="rounded-md border px-3 py-2 text-sm hover:bg-gray-50"
-                onClick={() => {
-                    console.log("submit_order", { variant, productId, shippingId });
-                    alert("submit_order を console.log しました（60点版）");
-                }}
-            >
-                注文を確定する（仮）
-            </button>
+            <section className="rounded-lg border p-4 space-y-2 text-sm">
+                <div>配送方法: {shippingId}</div>
+                <div>配送料: +{yen(shippingPrice)}円</div>
+            </section>
 
-            <div className="text-sm space-y-1">
-                <Link
-                    href={`/proto/v0/c1/shipping?variant=${variant}&productId=${productId}`}
-                    className="hover:underline"
+            <section className="rounded-lg border p-4 space-y-2 text-sm">
+                <div>オプション:</div>
+                {options.length === 0 ? (
+                    <div className="text-gray-600">なし</div>
+                ) : (
+                    <ul className="list-disc pl-5">
+                        {options.map((o) => (
+                            <li key={o}>{o}</li>
+                        ))}
+                    </ul>
+                )}
+            </section>
+
+            <section className="rounded-lg border p-4 text-base font-semibold">
+                合計金額: {yen(total)}円
+            </section>
+
+            <div className="space-y-2 text-sm">
+                <button
+                    disabled
+                    className="block w-full rounded-lg border p-3 text-center text-gray-500"
                 >
-                    ← 配送選択へ戻る
-                </Link>
-                <br />
-                <Link href="/proto/v0" className="hover:underline">
-                    ← v0トップへ戻る
-                </Link>
+                    注文を確定する（ダミー）
+                </button>
             </div>
-        </div>
+            <Link
+                href={`/proto/v0/c1/shipping?variant=${variant}&productId=${productId}&productPrice=${productPrice}`}
+                className="hover:underline block"
+            >
+                ← 配送選択へ戻る
+            </Link>
+        </main>
     );
 }
