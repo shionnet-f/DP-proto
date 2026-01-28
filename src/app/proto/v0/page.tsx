@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function ProtoV0TopPage() {
     return (
         <div className="space-y-4">
-            <h1 className="text-xl font-bold">v0（60点プロトタイプ）</h1>
+            <h1 className="text-xl font-bold">プロトタイプ_v0</h1>
 
             <div className="rounded-lg border p-4">
                 <h2 className="font-semibold">カテゴリー</h2>
