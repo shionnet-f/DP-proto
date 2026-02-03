@@ -47,7 +47,10 @@ export default function ProtoV0TopPage() {
                                 </Link>
                             </li> */}
               <li>
-                <Link href="/proto/v0/c2/products" className="hover:underline">
+                <Link
+                  href="/proto/v0/c2/products?variant=dp"
+                  className="hover:underline"
+                >
                   [ Deceptive Patterns ]
                 </Link>
               </li>
