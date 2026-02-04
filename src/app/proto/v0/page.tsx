@@ -56,7 +56,28 @@ export default function ProtoV0TopPage() {
               </li>
             </ul>
           </li>
-          <li className="text-gray-500">分類3：好ましくない押しつけ</li>
+          <li>
+            <span className="text-gray-700">分類3：好ましくない押しつけ</span>
+          </li>
+          <ul className="mt-2 list-inside list-disc space-y-1 pl-4">
+            {/* <li>
+                                <Link
+                                    href="/proto/v0/c1/products?variant=control"
+                                    className="hover:underline"
+                                >
+                                    [ Control ]
+                                </Link>
+                            </li> */}
+            <li>
+              <Link
+                href="/proto/v0/c3/products?variant=dp"
+                className="hover:underline"
+              >
+                [ Deceptive Patterns ]
+              </Link>
+            </li>
+          </ul>
+
           <li className="text-gray-500">分類4：好ましくない制約</li>
         </ul>
       </div>
