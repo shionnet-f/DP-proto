@@ -1,11 +1,12 @@
-// src/app/proto/v0/c1/shipping/page.tsx
+// src/app/proto/v0/c2/shipping/page.tsx
 import Link from "next/link";
 
 type SearchParams = {
   variant?: string;
   productId?: string;
   productPrice?: string;
-  shippingId?: string; // ✅ 未選択なら undefined のまま
+
+  shippingId?: string; // 未選択なら undefined
   opt?: string | string[];
 };
 
@@ -18,17 +19,15 @@ const SHIPPING = [
     id: "express",
     title: "お急ぎ配送",
     priceYen: 150,
-    pros: ["到着目安：1〜2日", "急ぎの予定に間に合いやすい"],
-    cons: ["追加料金がかかります"],
-    featured: true,
+    pros: ["到着目安：1〜2日"],
+    cons: ["追加料金が発生します"],
   },
   {
     id: "normal",
     title: "通常配送",
     priceYen: 0,
-    pros: ["追加料金なし"],
-    cons: ["到着目安：3〜5日"],
-    featured: false,
+    pros: ["到着目安：3〜5日"],
+    cons: ["混雑状況により遅れる場合があります"],
   },
 ] as const;
 
@@ -56,7 +55,7 @@ function toArray(v?: string | string[]) {
   return Array.isArray(v) ? v : [v];
 }
 
-export default async function ProtoV0C1ShippingPage({ searchParams }: Props) {
+export default async function ProtoV0C2ShippingPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const variant = sp.variant === "dp" ? "dp" : "control";
   const isDP = variant === "dp";
@@ -64,11 +63,10 @@ export default async function ProtoV0C1ShippingPage({ searchParams }: Props) {
   const productId = sp.productId ?? "";
   const productPrice = Number(sp.productPrice ?? 0) || 0;
 
-  // ✅ 初期値なし（未選択）
-  const selectedShippingId = sp.shippingId; // ← default を置かない
+  // 初期値なし（未選択）
+  const selectedShippingId = sp.shippingId;
   const selectedOpts = new Set(toArray(sp.opt));
 
-  // ✅ 選択されていない可能性がある（null許容）
   const shipping = SHIPPING.find((s) => s.id === selectedShippingId) ?? null;
 
   const optionsTotal = OPTIONS.reduce(
@@ -76,9 +74,14 @@ export default async function ProtoV0C1ShippingPage({ searchParams }: Props) {
     0,
   );
 
-  // ✅ 未選択なら配送料は 0 として計算（※最終的にconfirm側でどう扱うかは仕様）
   const shippingPrice = shipping?.priceYen ?? 0;
-  const total = productPrice + shippingPrice + optionsTotal;
+
+  // control: ここで確定っぽく内訳を出す
+  // dp: 受動的省略として Shipping では金額詳細を「確定前」として出さない（0表示 or 未確定表示）
+  const shownShippingPrice = isDP ? 0 : shippingPrice;
+  const shownOptionsTotal = isDP ? 0 : optionsTotal;
+
+  const totalShown = productPrice + shownShippingPrice + shownOptionsTotal;
 
   const baseParams: Record<string, string> = {
     variant,
@@ -90,7 +93,7 @@ export default async function ProtoV0C1ShippingPage({ searchParams }: Props) {
     const qp = new URLSearchParams(baseParams);
     qp.set("shippingId", shippingId);
     for (const o of selectedOpts) qp.append("opt", o);
-    return `/proto/v0/c1/shipping?${qp.toString()}`;
+    return `/proto/v0/c2/shipping?${qp.toString()}`;
   };
 
   const toggleOptHref = (optId: string) => {
@@ -99,25 +102,23 @@ export default async function ProtoV0C1ShippingPage({ searchParams }: Props) {
     else next.add(optId);
 
     const qp = new URLSearchParams(baseParams);
-    // ✅ 未選択なら shippingId を付けない（初期値無を維持）
     if (selectedShippingId) qp.set("shippingId", selectedShippingId);
     for (const o of next) qp.append("opt", o);
-    return `/proto/v0/c1/shipping?${qp.toString()}`;
+    return `/proto/v0/c2/shipping?${qp.toString()}`;
   };
 
   const confirmHref = () => {
     const qp = new URLSearchParams(baseParams);
-    // ✅ 未選択なら shippingId を付けない（confirmでどう扱うかが「省略DP」のコア）
     if (selectedShippingId) qp.set("shippingId", selectedShippingId);
     for (const o of selectedOpts) qp.append("opt", o);
-    return `/proto/v0/c1/confirm?${qp.toString()}`;
+    return `/proto/v0/c2_dp1/confirm?${qp.toString()}`;
   };
 
   return (
     <main className="mx-auto max-w-6xl px-6 space-y-6">
       <header className="space-y-1">
         <h1 className="text-xl font-bold">
-          カテゴリー1 / 配送・オプション（{variant}）
+          カテゴリー2 / 配送・オプション（{variant}）
         </h1>
         <p className="text-sm text-gray-600">
           配送方法とオプションを選択してください。
@@ -142,7 +143,6 @@ export default async function ProtoV0C1ShippingPage({ searchParams }: Props) {
         <div className="rounded-lg border bg-white p-4 space-y-3">
           <h2 className="font-semibold">配送方法</h2>
 
-          {/* 未選択のヒント（小さめ） */}
           {!selectedShippingId && (
             <p className="text-xs text-gray-500">
               ※配送方法を選択できます（未選択のまま進めることも可能です）
@@ -153,26 +153,17 @@ export default async function ProtoV0C1ShippingPage({ searchParams }: Props) {
             {SHIPPING.map((s) => {
               const checked = selectedShippingId === s.id;
 
-              // 「おすすめ」バッジ：dp時だけ出す（expressのみ）
-              const isFeatured = isDP && !!s.featured;
-
-              // dp時は express を常に薄く強調（選択してなくても）
-              const emphasizeExpress = isDP && s.id === "express";
-
               return (
                 <Link
                   key={s.id}
                   href={makeShippingHref(s.id)}
                   className={[
-                    "block rounded-lg border p-3 hover:bg-gray-50 transition",
+                    "block rounded-lg border p-3 hover:bg-gray-50 transition bg-white",
                     checked ? "border-2 shadow-sm" : "",
-                    emphasizeExpress
-                      ? "bg-orange-50 border-orange-200 border-l-4 border-l-orange-400"
-                      : "bg-white",
                   ].join(" ")}
                 >
                   <div className="flex items-start gap-3">
-                    {/* ✅ ラジオ風（初期値なしなら黒丸は出ない） */}
+                    {/* ラジオ風 */}
                     <div
                       className={[
                         "mt-1 h-4 w-4 rounded-full border flex items-center justify-center",
@@ -186,14 +177,9 @@ export default async function ProtoV0C1ShippingPage({ searchParams }: Props) {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="font-semibold">
-                          {s.title}
-                          {isFeatured && (
-                            <span className="ml-2 rounded-full bg-orange-100 text-orange-700 px-2 py-0.5 text-xs font-medium">
-                              おすすめ
-                            </span>
-                          )}
-                        </div>
+                        <div className="font-semibold">{s.title}</div>
+
+                        {/* dpでも値段は表示してOK（省略は下の「合計」領域で行う） */}
                         <div className="text-sm text-gray-700">
                           +¥{yen(s.priceYen)}
                         </div>
@@ -201,7 +187,7 @@ export default async function ProtoV0C1ShippingPage({ searchParams }: Props) {
 
                       <div className="mt-2 grid gap-1 text-sm">
                         <div className="text-gray-700">
-                          <span className="font-medium">メリット：</span>
+                          <span className="font-medium">内容：</span>
                           {s.pros.join(" / ")}
                         </div>
                         <div className="text-gray-500">
@@ -209,12 +195,6 @@ export default async function ProtoV0C1ShippingPage({ searchParams }: Props) {
                           {s.cons.join(" / ")}
                         </div>
                       </div>
-
-                      {isFeatured && (
-                        <p className="mt-2 text-sm text-gray-700">
-                          迷った場合はこちらを選ぶ方が安心です。
-                        </p>
-                      )}
                     </div>
                   </div>
                 </Link>
@@ -236,7 +216,7 @@ export default async function ProtoV0C1ShippingPage({ searchParams }: Props) {
                   key={o.id}
                   href={toggleOptHref(o.id)}
                   className={[
-                    "block rounded-lg border p-3 hover:bg-gray-50 transition",
+                    "block rounded-lg border p-3 hover:bg-gray-50 transition bg-white",
                     checked ? "border-2 shadow-sm" : "",
                   ].join(" ")}
                 >
@@ -263,32 +243,51 @@ export default async function ProtoV0C1ShippingPage({ searchParams }: Props) {
         </div>
       </section>
 
-      {/* 合計 */}
-      <section className="rounded-lg border bg-white p-4 space-y-2 text-sm">
+      {/* 合計（分類2: dpではここで「詳細を見せない」） */}
+      {/* <section className="rounded-lg border bg-white p-4 space-y-2 text-sm">
         <div className="flex justify-between">
           <span className="text-gray-600">商品</span>
           <span>¥{yen(productPrice)}</span>
         </div>
+
         <div className="flex justify-between">
           <span className="text-gray-600">
             配送料（{shipping?.title ?? "未選択"}）
           </span>
-          <span>+¥{yen(shippingPrice)}</span>
+
+          {isDP ? (
+            <span className="text-gray-500">（最終確認で確定）</span>
+          ) : (
+            <span>+¥{yen(shippingPrice)}</span>
+          )}
         </div>
+
         <div className="flex justify-between">
           <span className="text-gray-600">オプション</span>
-          <span>+¥{yen(optionsTotal)}</span>
+
+          {isDP ? (
+            <span className="text-gray-500">（最終確認で確定）</span>
+          ) : (
+            <span>+¥{yen(optionsTotal)}</span>
+          )}
         </div>
+
         <div className="border-t pt-2 flex justify-between text-base font-semibold">
           <span>合計</span>
-          <span>¥{yen(total)}</span>
+          <span>¥{yen(totalShown)}</span>
         </div>
-      </section>
+
+        {isDP && (
+          <p className="text-xs text-gray-500">
+            ※ 配送料・オプションの金額は最終確認画面でまとめて表示されます。
+          </p>
+        )}
+      </section> */}
 
       {/* ナビ */}
       <div className="flex items-center justify-between">
         <Link
-          href={`/proto/v0/c1/products?variant=${variant}`}
+          href={`/proto/v0/c2/products?variant=${variant}`}
           className="text-sm hover:underline"
         >
           ← 商品選択へ戻る

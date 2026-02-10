@@ -25,10 +25,16 @@ export default function ProtoV0TopPage() {
                             </li> */}
               <li>
                 <Link
-                  href="/proto/v0/c1/products?variant=dp"
+                  href="/proto/v0/c1_dp1/products?variant=dp"
                   className="hover:underline"
                 >
-                  [ Deceptive Patterns ]
+                  [ Deceptive Patterns 1 ]
+                </Link>
+                <Link
+                  href="/proto/v0/c1_dp2/products?variant=dp"
+                  className="hover:underline"
+                >
+                  [ Deceptive Patterns 2 ]
                 </Link>
               </li>
             </ul>
@@ -48,10 +54,10 @@ export default function ProtoV0TopPage() {
                             </li> */}
               <li>
                 <Link
-                  href="/proto/v0/c2/products?variant=dp"
+                  href="/proto/v0/c2_dp1/products?variant=dp"
                   className="hover:underline"
                 >
-                  [ Deceptive Patterns ]
+                  [ Deceptive Patterns 1 ]
                 </Link>
               </li>
             </ul>
@@ -70,7 +76,7 @@ export default function ProtoV0TopPage() {
                             </li> */}
             <li>
               <Link
-                href="/proto/v0/c3/products?variant=dp"
+                href="/proto/v0/c3_dp1/products?variant=dp"
                 className="hover:underline"
               >
                 [ Deceptive Patterns ]

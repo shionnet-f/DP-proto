@@ -58,7 +58,7 @@ export default function ProductsGridClient({
 
               {/* 省略が効くように：モーダルを見なくても購入へ進める */}
               <Link
-                href={`/proto/v0/c2/shipping?variant=${variant}&productId=${p.id}&productPrice=${p.priceYen}`}
+                href={`/proto/v0/c2_dp1/shipping?variant=${variant}&productId=${p.id}&productPrice=${p.priceYen}`}
                 className="rounded-md border px-3 py-2 text-sm hover:bg-gray-50"
               >
                 購入へ

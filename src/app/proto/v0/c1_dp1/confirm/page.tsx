@@ -1,12 +1,11 @@
-// src/app/proto/v0/c2/confirm/page.tsx
+// src/app/proto/v0/c1/confirm/page.tsx
 import Link from "next/link";
-import ConfirmSummary from "./ConfirmSummary";
 
 type SearchParams = {
   variant?: string;
   productId?: string;
   productPrice?: string;
-  shippingId?: string; // c2は未選択あり
+  shippingId?: string;
   opt?: string | string[];
 };
 
@@ -23,26 +22,18 @@ function toArray(v?: string | string[]) {
   return Array.isArray(v) ? v : [v];
 }
 
-function shippingTitle(id?: string) {
-  if (!id) return "未選択";
-  return id === "express" ? "お急ぎ配送" : "通常配送";
-}
-
-export default async function ProtoV0C2ConfirmPage({ searchParams }: Props) {
+export default async function ProtoV0C1ConfirmPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const variant = sp.variant === "dp" ? "dp" : "control";
-  const isDP = variant === "dp";
 
   const productId = sp.productId ?? "";
   const productPrice = Number(sp.productPrice ?? 0) || 0;
 
-  // c2: 未選択許容（shippingページで未選択のまま進める）
-  const shippingId = sp.shippingId; // undefined のままありうる
+  const shippingId = sp.shippingId ?? "normal";
   const options = toArray(sp.opt);
 
-  // Shipping側と一致させる（未選択なら 0）
-  const shippingPrice =
-    shippingId === "express" ? 150 : shippingId === "normal" ? 0 : 0;
+  // Shipping側（express/normal）と一致させる
+  const shippingPrice = shippingId === "express" ? 150 : 0;
 
   const optionsPrice =
     (options.includes("insurance") ? 300 : 0) +
@@ -50,28 +41,24 @@ export default async function ProtoV0C2ConfirmPage({ searchParams }: Props) {
 
   const total = productPrice + shippingPrice + optionsPrice;
 
-  // 戻る用URL（shippingId/opt を保持）
+  // 戻る用URL（shippingId/optを保持）
   const qp = new URLSearchParams({
     variant,
     productId,
     productPrice: String(productPrice),
+    shippingId,
   });
-  if (shippingId) qp.set("shippingId", shippingId);
   for (const o of options) qp.append("opt", o);
 
   return (
     <main className="mx-auto max-w-6xl px-6 space-y-6">
       <header className="space-y-1">
-        <div className="text-xs text-gray-500">proto / v0 / c2</div>
+        <div className="text-xs text-gray-500">proto / v0 / c1</div>
         <h1 className="text-xl font-bold">
-          カテゴリー2 / 最終確認（{variant}）
+          カテゴリー1 / 最終確認（{variant}）
         </h1>
-        <p className="text-sm text-gray-600">
-          注文内容を確認して、注文を確定してください。
-        </p>
       </header>
 
-      {/* 商品 */}
       <section className="rounded-lg border bg-white p-4 space-y-2 text-sm">
         <div>
           商品: <span className="font-mono">{productId}</span>
@@ -79,18 +66,28 @@ export default async function ProtoV0C2ConfirmPage({ searchParams }: Props) {
         <div>商品価格: ¥{yen(productPrice)}</div>
       </section>
 
-      {/* ★ c2: ここで「内訳の出し方」を分岐（control: そのまま / dp: 折りたたみ） */}
-      <ConfirmSummary
-        isDP={isDP}
-        shippingId={shippingId}
-        shippingTitle={shippingTitle(shippingId)}
-        shippingPrice={shippingPrice}
-        options={options}
-        optionsPrice={optionsPrice}
-        total={total}
-      />
+      <section className="rounded-lg border bg-white p-4 space-y-2 text-sm">
+        <div>配送方法: {shippingId}</div>
+        <div>配送料: +¥{yen(shippingPrice)}</div>
+      </section>
 
-      {/* 確定ボタン（今回はdisabledでOK） */}
+      <section className="rounded-lg border bg-white p-4 space-y-2 text-sm">
+        <div>オプション:</div>
+        {options.length === 0 ? (
+          <div className="text-gray-600">なし</div>
+        ) : (
+          <ul className="list-disc pl-5">
+            {options.map((o) => (
+              <li key={o}>{o}</li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="rounded-lg border bg-white p-4 text-base font-semibold">
+        合計金額: ¥{yen(total)}
+      </section>
+
       <div className="space-y-2 text-sm">
         <button
           disabled
@@ -101,7 +98,7 @@ export default async function ProtoV0C2ConfirmPage({ searchParams }: Props) {
       </div>
 
       <Link
-        href={`/proto/v0/c2/shipping?${qp.toString()}`}
+        href={`/proto/v0/c1_dp1/shipping?${qp.toString()}`}
         className="hover:underline block text-sm"
       >
         ← 配送選択へ戻る
